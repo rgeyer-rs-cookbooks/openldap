@@ -1,0 +1,240 @@
+{
+  "name": "openldap",
+  "description": "Installs/Configures openldap",
+  "long_description": "= DESCRIPTION:\nA set of Chef tools for installing, configuring, and managing OpenLDAP\n\n= REQUIREMENTS:\nThis cookbook requires the rightscale cookbook.\n\n= ATTRIBUTES:\n\n= USAGE:\n\n= TODO:\ncollectd monitoring goodness.\nhttp://prefetch.net/articles/monitoringldap.html\n\nUse a rubygem to access and manipulate ldap\nhttps://rubygems.org/gems/net-ldap\n\nFully implement provider/consumer\n\nEnable LDAP over SSH encryption",
+  "maintainer": "Ryan J. Geyer",
+  "maintainer_email": "me@ryangeyer.com",
+  "license": "Apache 2.0",
+  "platforms": {
+    "ubuntu": ">= 0.0.0",
+    "centos": ">= 0.0.0"
+  },
+  "dependencies": {
+    "rightscale": ">= 0.0.0",
+    "rightscale_sandbox": ">= 0.0.0",
+    "sys_dns": ">= 0.0.0",
+    "block_device": ">= 0.0.0"
+  },
+  "recommendations": {
+  },
+  "suggestions": {
+  },
+  "conflicting": {
+  },
+  "providing": {
+  },
+  "replacing": {
+  },
+  "attributes": {
+    "openldap/allow_remote": {
+      "display_name": "OpenLDAP Allow Remote?",
+      "description": "A boolean indicating if the OpenLDAP server should accept remote connections or not",
+      "choice": [
+        "true",
+        "false"
+      ],
+      "required": "required",
+      "recipes": [
+        "openldap::install_openldap"
+      ],
+      "calculated": false,
+      "type": "string"
+    },
+    "openldap/listen_port": {
+      "display_name": "OpenLDAP listen port",
+      "description": "The TCP/IP port the OpenLDAP server should listen on",
+      "default": "389",
+      "recipes": [
+        "openldap::install_openldap"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    },
+    "openldap/config_admin_cn": {
+      "display_name": "OpenLDAP Config Admin CN",
+      "description": "The desired \"Common Name\" for the slapd configuration (cn=config) administrator",
+      "required": "required",
+      "recipes": [
+        "openldap::install_openldap",
+        "openldap::setup_config_admin_creds"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string"
+    },
+    "openldap/config_admin_password": {
+      "display_name": "OpenLDAP Config Admin password",
+      "description": "The desired password for the slapd configuration (cn=config) administrator",
+      "required": "required",
+      "recipes": [
+        "openldap::install_openldap",
+        "openldap::setup_config_admin_creds"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string"
+    },
+    "openldap/schemas": {
+      "display_name": "OpenLDAP Schemas",
+      "description": "A list (in the form of an array) of schemas to install",
+      "type": "array",
+      "default": [
+        "core",
+        "cosine",
+        "inetorgperson"
+      ],
+      "recipes": [
+        "openldap::install_openldap",
+        "openldap::do_enable_schemas"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "required": "optional"
+    },
+    "openldap/database_admin_cn": {
+      "display_name": "OpenLDAP Database Admin CN",
+      "description": "The desired \"Common Name\" for the administrator of the new database",
+      "required": "required",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string"
+    },
+    "openldap/database_admin_password": {
+      "display_name": "OpenLDAP Config Admin password",
+      "description": "The desired password for the administrator of the new database",
+      "required": "required",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string"
+    },
+    "openldap/base_dn": {
+      "display_name": "OpenLDAP Database Base DN",
+      "description": "The base DN of the new database to create, if set to 'Ignore' the new database will contain all DN's other than cn=config",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    },
+    "openldap/db_type": {
+      "display_name": "OpenLDAP Database Type",
+      "description": "The OpenLDAP database type, currently only bdb and hdb are supported",
+      "choice": [
+        "hdb",
+        "bdb"
+      ],
+      "default": "hdb",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    },
+    "openldap/cache_size": {
+      "display_name": "OpenLDAP Database Cache Size",
+      "description": "A Berkley DB tuning setting, leave it as \"0 2097152 0\" if you don't know what you're doing.",
+      "default": "0 2097152 0",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    },
+    "openldap/max_objects": {
+      "display_name": "OpenLDAP Database Max Objects",
+      "description": "A Berkley DB tuning setting, leave it as \"1500\" if you don't know what you're doing.",
+      "default": "1500",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    },
+    "openldap/max_locks": {
+      "display_name": "OpenLDAP Database Max Locks",
+      "description": "A Berkley DB tuning setting, leave it as \"1500\" if you don't know what you're doing.",
+      "default": "1500",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    },
+    "openldap/max_lockers": {
+      "display_name": "OpenLDAP Database Max Lockers",
+      "description": "A Berkley DB tuning setting, leave it as \"1500\" if you don't know what you're doing.",
+      "default": "1500",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    },
+    "openldap/checkpoint": {
+      "display_name": "OpenLDAP Database Checkpoint",
+      "description": "A Berkley DB tuning setting, leave it as \"512 30\" if you don't know what you're doing.",
+      "default": "512 30",
+      "recipes": [
+        "openldap::do_create_database"
+      ],
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional"
+    }
+  },
+  "groupings": {
+  },
+  "recipes": {
+    "openldap::install_openldap": "Installs a basic, working OpenLDAP server daemon",
+    "openldap::setup_rightscale_syslog": "Appends configuration for OpenLDAP to the RightScale syslog configuration.",
+    "openldap::setup_config_admin_creds": "Sets the CN (Common Name) and password for the configuration admin",
+    "openldap::do_create_database": "Creates a new database to contain records for the specified base_dn",
+    "openldap::do_enable_schemas": "Enables the OpenLDAP schemas listed",
+    "openldap::do_initialize_provider": "Configures this node to be the LDAP replication provider."
+  },
+  "version": "0.0.1"
+}
