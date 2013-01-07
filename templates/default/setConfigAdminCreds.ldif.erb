@@ -1,7 +1,7 @@
 dn: olcDatabase={0}config,cn=config
 changetype: modify
 add: olcRootDN
-olcRootDN: cn=<%= @config_admin_cn %>,cn=config
+olcRootDN: <%= @config_admin_dn %>
 
 dn: olcDatabase={0}config,cn=config
 changetype: modify

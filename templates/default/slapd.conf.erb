@@ -1,0 +1,10 @@
+database config
+rootdn "<%= @rootdn %>"
+rootpw <%= @rootpw %>
+pidfile <%= node["openldap"]["pid_file"] %>
+
+<% @schemas.each do |schema| -%>
+include <%= ::File.join(node["openldap"]["os_config_dir"], "schema") %>/<%= schema %>.schema
+<% end -%>
+
+access to * by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" manage by * none

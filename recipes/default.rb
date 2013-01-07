@@ -18,10 +18,8 @@
 
 rightscale_marker :begin
 
-include_recipe "rs_sandbox::default"
-
-if ::File.directory? node[:rs_sandbox][:home]
-  load_ruby_gem_into_rs_sandbox("net-ldap", "0.2.2", nil, true)
+if ::File.directory? node["rightscale_sandbox"]["home"]
+  load_ruby_gem_into_rightscale_sandbox("net-ldap", "0.2.2", nil, true)
 end
 
 g = gem_package "net-ldap" do

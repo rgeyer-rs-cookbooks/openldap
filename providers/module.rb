@@ -19,13 +19,11 @@ action :enable do
   class_filter = Net::LDAP::Filter.eq("objectClass", "olcModuleList")
   module_filter = Net::LDAP::Filter.eq("olcModuleLoad", module_name)
   filter = class_filter & module_filter
-  module_search = net_ldap.search(:base => new_resource.base_dn, :filter => filter, :attributes => "dn")
+  module_search = config_ldap.search(:base => "cn=config", :filter => filter)
   unless module_search && module_search.length > 0
     filter = Net::LDAP::Filter.eq("objectClass", "olcModuleList")
-    all_modules = net_ldap.search(:base => new_resource.base_dn, :filter => filter, :attributes => "dn")
-    idx = all_modules ? all_modules.length : 0
-
-    idx = idx.to_i
+    all_modules = config_ldap.search(:base => "cn=config", :filter => filter)
+    idx = all_modules.length
 
     Chef::Log.info("Enabling OpenLDAP module ({#{idx}}#{module_name})")
 

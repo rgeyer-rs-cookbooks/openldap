@@ -19,7 +19,7 @@
 rightscale_marker :begin
 
 openldap_schema "Enable schema list" do
-  schemas node[:openldap][:schemas]
+  schemas node["openldap"]["schemas"]
   action :enable
 end
 

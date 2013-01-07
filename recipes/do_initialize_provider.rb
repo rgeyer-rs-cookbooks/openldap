@@ -2,7 +2,7 @@
 # Cookbook Name:: openldap
 # Recipe:: do_initialize_provider
 #
-# Copyright 2011, Ryan J. Geyer
+# Copyright 2011-2012, Ryan J. Geyer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ openldap_config "Add syncprov to all databases" do
   action :add_syncprov_to_all_dbs
 end
 
-include_recipe "sys_dns::do_set_private"
+#include_recipe "sys_dns::do_set_private"
 
 right_link_tag "openldap:role=provider"
 

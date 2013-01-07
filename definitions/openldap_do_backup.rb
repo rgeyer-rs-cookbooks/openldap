@@ -14,9 +14,9 @@
 
 define :openldap_do_backup, :force => false, :backup_type => "primary" do
   # TODO: Make sure that data consistency is ensured.  Need to stop slapd?
-  block_device node[:block_device][:nickname] do
-    lineage node[:openldap][:backup][:lineage]
-    force params[:force]
+  block_device node["block_device"]["nickname"] do
+    lineage node["openldap"]["backup"]["lineage"]
+    force params["force"]
     action [ :backup_lock_take, :snapshot ]
   end
 end

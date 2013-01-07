@@ -18,44 +18,17 @@
 
 rightscale_marker :begin
 
-Chef::Log.info("RIGHT UP AT THE TOP HERE LET'S ACCESS AN OHAI PROPERTY -- #{node["platform"]} #{node["platform_family"]}")
+include_recipe "openldap::default"
 
-include_recipe "openldap::setup_openldap"
-
-listen_host = ""
-listen_host = "127.0.0.1" unless node[:openldap][:allow_remote] == "true"
-
-listen_port = node[:openldap][:listen_port]
-
-node[:openldap][:packages].each do |p|
+node["openldap"]["packages"].each do |p|
   package p
 end
 
-service "slapd" do
-  action [:enable,:start]
+openldap_config "Create an initial slapd.d config if it does not exist" do
+  action :create
 end
 
-template "/etc/default/slapd" do
-  source "slapd.defaults.erb"
-  variables( :listen_host => listen_host, :listen_port => listen_port)
-  backup false
-  notifies :restart, resources(:service => "slapd"), :immediately
-end
-
-# TODO: Do we need to wait for slapd to come back here, like we do in the BASH script?
-
-if node[:platform] == "ubuntu" && node[:platform_version] == "9.10"
-  openldap_execute_ldif do
-    source "ubuntu-karmic-9.10-fixRootDSE.ldif"
-    source_type :cookbook_file
-  end
-end
-
-# TODO: Actually need to bootstrap with a standard openldap_execute_ldif
-
-openldap_config "Set Config Admin Credentials" do
-  admin_cn node[:openldap][:config_admin_cn]
-  admin_pass node[:openldap][:config_admin_password]
+openldap_config "Set (or reset) persistent admin creds" do
   action :set_admin_creds
 end
 
@@ -66,14 +39,14 @@ end
 end
 
 openldap_schema "Enable schema list" do
-  schemas node[:openldap][:schemas]
+  schemas node["openldap"]["schemas"]
   action :enable
 end
 
-directory node[:openldap][:db_dir] do
+directory node["openldap"]["db_dir"] do
   recursive true
-  owner node[:openldap][:username]
-  group node[:openldap][:group]
+  owner node["openldap"]["username"]
+  group node["openldap"]["group"]
   action :create
 end
 

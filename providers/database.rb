@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include Rgeyer::Chef::NetLdap
+
 action :create do
   base_dn     = new_resource.base_dn
   db_type     = new_resource.db_type
@@ -21,31 +23,43 @@ action :create do
   max_lockers = new_resource.max_lockers
   checkpoint  = new_resource.checkpoint
 
-  admin_pwd = `slappasswd -s #{new_resource.admin_password}`
-  admin_dn = "cn=#{new_resource.admin_cn}"
+  admin_pwd = slappasswd_encode(new_resource.db_admin_password)
+  admin_dn = "cn=#{new_resource.db_admin_cn}"
+  admin_cn = new_resource.db_admin_cn
 
-  if base_dn
-    admin_dn = "#{base_dn},#{admin_dn}"
-    existing_base_count=`ldapsearch -Q -Y EXTERNAL -H ldapi:/// -b cn=config "(olcSuffix=#{base_dn})" | grep numEntries | cut -d' ' -f3`.to_i
-    if existing_base_count > 0
-      Chef::Log.info("A database already exists for entries under #{base_dn}.  Exiting...")
-      return
+  config_pwd = new_resource.config_admin_password
+  config_dn = "cn=chef-openldap-cookbook,#{base_dn}"
+
+  admin_dn = "#{admin_dn},#{base_dn}" if base_dn
+  existing_db = config_ldap.search(:base => "cn=config", :filter => Net::LDAP::Filter.eq("olcSuffix", base_dn))
+  if existing_db.length > 0
+    Chef::Log.info("A database already exists for entries under #{base_dn}.  Exiting...")
+  else
+    create_db_attrs = {
+      :objectclass => ["olcDatabaseConfig","olc#{db_type}Config"],
+      :olcDatabase => "{1}#{db_type}",
+      :olcDbDirectory => node["openldap"]["db_dir"],
+      :olcSuffix => base_dn,
+      :olcDbConfig => ["{0}set_cachesize #{cache_size}",
+                       "{1}set_lk_max_objects #{max_objects}",
+                       "{2}set_lk_max_locks #{max_locks}",
+                       "{3}set_lk_max_lockers #{max_lockers}"],
+      :olcLastMod => "TRUE",
+      :olcDbCheckpoint => checkpoint,
+      :olcDbIndex => ["uid pres,eq",
+                      "cn,sn,mail pres,eq,approx,sub",
+                      "objectClass eq"],
+      :olcAccess => "to * by self write by anonymous auth by dn.exact=\"#{admin_dn}\" manage by dn.base=\"gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth\" manage",
+      :olcRootDN => config_dn,
+      :olcRootPw => config_pwd
+    }
+    config_ldap{|ldap| ldap.add(:dn => "olcDatabase={1}#{db_type},cn=config", :attributes => create_db_attrs) }
+
+    unless base_dn.empty?
+      db_ldap(base_dn){|ldap| ldap.add(:dn => base_dn, :attributes => {:objectclass => ["domain","top"]}) }
     end
-  end
 
-  openldap_execute_ldif do
-    executable "ldapadd"
-    source_type :template
-    source "addDatabaseToConfig.ldif.erb"
-    db_type db_type
-    olc_suffix base_dn
-    admin_dn admin_dn
-    admin_password admin_pwd
-    cache_size cache_size
-    max_objects max_objects
-    max_locks max_locks
-    max_lockers max_lockers
-    checkpoint checkpoint
+    db_ldap(base_dn){|ldap| ldap.add(:dn => admin_dn, :attributes => {:objectclass => ["person","top"], :cn => admin_cn, :sn => admin_cn, :userPassword => admin_pwd}) }
   end
 
   new_resource.updated_by_last_action(true)

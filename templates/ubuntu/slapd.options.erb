@@ -2,7 +2,7 @@
 # backend to store configuration in LDIF, set this variable to the
 # directory containing the cn=config data; otherwise set it to the location
 # of your slapd.conf file.  If empty, use the compiled-in default
-# (<%= node[:openldap][:config_dir] %>/slapd.d).
+# (<%= node["openldap"]["os_config_dir"] %>/slapd.d).
 SLAPD_CONF=
 
 # System account to run the slapd server under. If empty the server
@@ -23,8 +23,7 @@ SLAPD_PIDFILE=
 # sockets.
 # Example usage:
 # SLAPD_SERVICES="ldap://127.0.0.1:389/ ldaps:/// ldapi:///"
-# TODO: Need to fix this up so that when neither host nor port is specified, the colon don't break ish.
-SLAPD_SERVICES="ldap://<% if @listen_host && @listen_port -%><%= @listen_host %>:<%= @listen_port %><% end %>/ ldapi:///"
+SLAPD_SERVICES="ldap://<% if !@listen_host.empty? && !@listen_port.empty? -%><%= @listen_host %>:<%= @listen_port %><% end %>/ ldapi:///"
 
 # If SLAPD_NO_START is set, the init script will not start or restart
 # slapd (but stop will still work).  Uncomment this if you are
@@ -37,7 +36,7 @@ SLAPD_SERVICES="ldap://<% if @listen_host && @listen_port -%><%= @listen_host %>
 # work).  Use this for temporarily disabling startup of slapd (when doing
 # maintenance, for example, or through a configuration management system)
 # when you don't want to edit a configuration file.
-SLAPD_SENTINEL_FILE=<%= node[:openldap][:config_dir] %>/noslapd
+SLAPD_SENTINEL_FILE=<%= node["openldap"]["os_config_dir"] %>/noslapd
 
 # For Kerberos authentication (via SASL), slapd by default uses the system
 # keytab file (/etc/krb5.keytab).  To use a different keytab file,

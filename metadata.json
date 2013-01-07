@@ -1,7 +1,7 @@
 {
   "name": "openldap",
   "description": "Installs/Configures openldap",
-  "long_description": "= DESCRIPTION:\nA set of Chef tools for installing, configuring, and managing OpenLDAP\n\n= REQUIREMENTS:\nThis cookbook requires the rightscale cookbook.\n\n= ATTRIBUTES:\n\n= USAGE:\n\n= TODO:\ncollectd monitoring goodness.\nhttp://prefetch.net/articles/monitoringldap.html\n\nUse a rubygem to access and manipulate ldap\nhttps://rubygems.org/gems/net-ldap\n\nFully implement provider/consumer\n\nEnable LDAP over SSH encryption",
+  "long_description": "# DESCRIPTION:\nA set of Chef tools for installing, configuring, and managing OpenLDAP\n\n# REQUIREMENTS:\nThis cookbook requires the rightscale cookbook.\n\n# ATTRIBUTES:\n\nopenldap/config_admin_password, set as the rootpw for the cn=config database, as well as all databases created (or accessed) by this cookbook\n\nA rootdn will be created named cn=chef-openldap-cookbook,<basedn> for any database created or accessed by this cookbook\n\nAs a failsafe, all databases will allow manage from a locally authenticated (by SASL) user connecting to LDAPI\n\n# USAGE:\n\n# TODO:\n\n* Security\n  * Consider creating a user for each DB which will be the \"admin\" user for this cookbook.  This would *not* be the rootdn and rootpw, and would be restricted to access from localhost only using \"peername\" http://www.openldap.org/doc/admin24/access-control.html\n\ncollectd monitoring goodness.\nhttp://prefetch.net/articles/monitoringldap.html\n\nUse a rubygem to access and manipulate ldap\nhttps://rubygems.org/gems/net-ldap\n\nFully implement provider/consumer\n\nEnable LDAP over SSH encryption\n\nCRAZY MAD UZEFULZ -- http://blogs.mindspew-age.com/tag/memory-mapped-database/\n\nBackup infoz -- http://www.openldap.org/faq/data/cache/287.html",
   "maintainer": "Ryan J. Geyer",
   "maintainer_email": "me@ryangeyer.com",
   "license": "Apache 2.0",
@@ -34,6 +34,7 @@
         "false"
       ],
       "required": "required",
+      "category": "OpenLDAP Daemon",
       "recipes": [
         "openldap::install_openldap"
       ],
@@ -44,6 +45,7 @@
       "display_name": "OpenLDAP listen port",
       "description": "The TCP/IP port the OpenLDAP server should listen on",
       "default": "389",
+      "category": "OpenLDAP Daemon",
       "recipes": [
         "openldap::install_openldap"
       ],
@@ -57,10 +59,40 @@
     "openldap/config_admin_cn": {
       "display_name": "OpenLDAP Config Admin CN",
       "description": "The desired \"Common Name\" for the slapd configuration (cn=config) administrator",
+      "category": "OpenLDAP olcConfig",
       "required": "required",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
       "recipes": [
-        "openldap::install_openldap",
-        "openldap::setup_config_admin_creds"
+
+      ]
+    },
+    "openldap/config_admin_password": {
+      "display_name": "OpenLDAP Config Admin password",
+      "description": "The desired password for the slapd configuration (cn=config) administrator",
+      "category": "OpenLDAP olcConfig",
+      "required": "required",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "recipes": [
+
+      ]
+    },
+    "openldap/replication_user_cn": {
+      "display_name": "OpenLDAP Replication User CN",
+      "description": "A CN given to the replication user which will be automatically created in each database to be replicated.  For a single producer with a single database with a root dn of dc=foo,dc=bar the created replication user will be cn=<replication_user_cn>,dc=foo,dc=bar",
+      "required": "optional",
+      "default": "dbrepl",
+      "category": "OpenLDAP Replication",
+      "recipes": [
+        "openldap::do_initialize_provider",
+        "openldap::do_initialize_consumer"
       ],
       "choice": [
 
@@ -68,13 +100,14 @@
       "calculated": false,
       "type": "string"
     },
-    "openldap/config_admin_password": {
-      "display_name": "OpenLDAP Config Admin password",
-      "description": "The desired password for the slapd configuration (cn=config) administrator",
+    "openldap/replication_user_password": {
+      "display_name": "OpenLDAP Replication Password",
+      "description": "The password used for the replication user which will be automatically created in each database to be replicated.",
       "required": "required",
+      "category": "OpenLDAP Replication",
       "recipes": [
-        "openldap::install_openldap",
-        "openldap::setup_config_admin_creds"
+        "openldap::do_initialize_provider",
+        "openldap::do_initialize_consumer"
       ],
       "choice": [
 
@@ -91,6 +124,7 @@
         "cosine",
         "inetorgperson"
       ],
+      "category": "OpenLDAP olcConfig",
       "recipes": [
         "openldap::install_openldap",
         "openldap::do_enable_schemas"
@@ -105,6 +139,7 @@
       "display_name": "OpenLDAP Database Admin CN",
       "description": "The desired \"Common Name\" for the administrator of the new database",
       "required": "required",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -118,6 +153,7 @@
       "display_name": "OpenLDAP Config Admin password",
       "description": "The desired password for the administrator of the new database",
       "required": "required",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -130,6 +166,7 @@
     "openldap/base_dn": {
       "display_name": "OpenLDAP Database Base DN",
       "description": "The base DN of the new database to create, if set to 'Ignore' the new database will contain all DN's other than cn=config",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -148,6 +185,7 @@
         "bdb"
       ],
       "default": "hdb",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -159,6 +197,7 @@
       "display_name": "OpenLDAP Database Cache Size",
       "description": "A Berkley DB tuning setting, leave it as \"0 2097152 0\" if you don't know what you're doing.",
       "default": "0 2097152 0",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -173,6 +212,7 @@
       "display_name": "OpenLDAP Database Max Objects",
       "description": "A Berkley DB tuning setting, leave it as \"1500\" if you don't know what you're doing.",
       "default": "1500",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -187,6 +227,7 @@
       "display_name": "OpenLDAP Database Max Locks",
       "description": "A Berkley DB tuning setting, leave it as \"1500\" if you don't know what you're doing.",
       "default": "1500",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -201,6 +242,7 @@
       "display_name": "OpenLDAP Database Max Lockers",
       "description": "A Berkley DB tuning setting, leave it as \"1500\" if you don't know what you're doing.",
       "default": "1500",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -215,6 +257,7 @@
       "display_name": "OpenLDAP Database Checkpoint",
       "description": "A Berkley DB tuning setting, leave it as \"512 30\" if you don't know what you're doing.",
       "default": "512 30",
+      "category": "OpenLDAP Database",
       "recipes": [
         "openldap::do_create_database"
       ],
@@ -234,7 +277,8 @@
     "openldap::setup_config_admin_creds": "Sets the CN (Common Name) and password for the configuration admin",
     "openldap::do_create_database": "Creates a new database to contain records for the specified base_dn",
     "openldap::do_enable_schemas": "Enables the OpenLDAP schemas listed",
-    "openldap::do_initialize_provider": "Configures this node to be the LDAP replication provider."
+    "openldap::do_initialize_provider": "Configures this node to be the LDAP replication provider.",
+    "openldap::do_initialize_consumer": "Configures this node to be an LDAP replication consumer."
   },
   "version": "0.0.1"
 }

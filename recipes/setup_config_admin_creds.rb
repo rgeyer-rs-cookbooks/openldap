@@ -19,8 +19,8 @@
 rightscale_marker :begin
 
 openldap_config "Set Config Admin Credentials" do
-  admin_cn node[:openldap][:config_admin_cn]
-  admin_pass node[:openldap][:config_admin_password]
+  admin_cn node["openldap"]["config_admin_cn"]
+  admin_pass node["openldap"]["config_admin_password"]
   action :set_admin_creds
 end
 

@@ -2,7 +2,7 @@
 # Cookbook Name:: openldap
 # Recipe:: do_create_database
 #
-# Copyright 2011, Ryan J. Geyer
+# Copyright 2011-2012, Ryan J. Geyer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@
 
 rightscale_marker :begin
 
-openldap_database node[:openldap][:base_dn] do
-  base_dn node[:openldap][:base_dn]
-  db_type node[:openldap][:db_type]
-  admin_cn node[:openldap][:database_admin_cn]
-  admin_password node[:openldap][:database_admin_password]
-  cache_size node[:openldap][:cache_size]
-  max_objects node[:openldap][:max_objects]
-  max_locks node[:openldap][:max_locks]
-  max_lockers node[:openldap][:max_lockers]
-  checkpoint node[:openldap][:checkpoint]
+openldap_database node["openldap"]["base_dn"] do
+  base_dn node["openldap"]["base_dn"]
+  db_type node["openldap"]["db_type"]
+  db_admin_cn node["openldap"]["database_admin_cn"]
+  db_admin_password node["openldap"]["database_admin_password"]
+  cache_size node["openldap"]["cache_size"]
+  max_objects node["openldap"]["max_objects"]
+  max_locks node["openldap"]["max_locks"]
+  max_lockers node["openldap"]["max_lockers"]
+  checkpoint node["openldap"]["checkpoint"]
   action :create
 end
 
