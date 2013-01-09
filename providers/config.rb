@@ -97,7 +97,9 @@ action :add_syncprov_to_all_dbs do
   bdb_filter = Net::LDAP::Filter.eq("objectclass", "olcbdbconfig")
   filter = hdb_filter | bdb_filter
   dbs = nil
-  config_ldap{|ldap| dbs = ldap.search(:base => "cn=config", :filter => filter, :attributes => ["dn", "olcSuffix"]) }
+  config_ldap{|ldap| dbs = ldap.search(:base => "cn=config", :filter => filter, :attributes => ["dn", "olcSuffix", "olcAccess"]) }
+
+  # TODO: Should I clear all of the openldap:<basedn>=provider tags?
 
   dbs.each do |db|
     # Setup the overlay
@@ -124,11 +126,11 @@ action :add_syncprov_to_all_dbs do
     end
 
     db_suffix = db.olcSuffix.first.to_s
+    repl_user_cn = node["openldap"]["replication_user_cn"]
+    repl_user_dn = "cn=#{repl_user_cn},#{db_suffix}"
+    repl_user_pass = slappasswd_encode(node["openldap"]["replication_user_password"])
     # Create a replication user
     db_ldap(db_suffix) do |ldap|
-      repl_user_cn = node["openldap"]["replication_user_cn"]
-      repl_user_dn = "cn=#{repl_user_cn},#{db_suffix}"
-      repl_user_pass = slappasswd_encode(node["openldap"]["replication_user_password"])
       repl_user = ldap.search(:base => repl_user_dn)
       if repl_user && repl_user.length > 0
         ldap.modify(:dn => repl_user_dn, :operations => [[:replace, :userPassword, repl_user_pass]])
@@ -141,6 +143,61 @@ action :add_syncprov_to_all_dbs do
         }
         ldap.add(:dn => repl_user_dn, :attributes => attributes)
       end
+    end
+
+    # Grant read access to the replication user
+    olcaccess_operation = {
+      :action => :add,
+      :value => "to * by dn.exact=\"#{repl_user_dn}\" read"
+    }
+
+    db.olcaccess.each do |olcaccess|
+      if /to \*|dn\.subtree="#{db_suffix}"/ =~ olcaccess
+        olcaccess_operation[:action] = :none
+        unless olcaccess.include?("by dn.exact=\"#{repl_user_dn}\" read")
+          olcaccess_operation[:value] = "#{olcaccess} by dn.exact=\"#{repl_user_dn}\" read"
+          olcaccess_operation[:action] = :replace
+        end
+      end
+    end
+
+    config_ldap do |ldap|
+      ldap.modify(:dn => db.dn, :operations => [[olcaccess_operation[:action], :olcAccess, olcaccess_operation[:value]]])
+    end unless olcaccess_operation[:action] == :none
+
+    right_link_tag "openldap:#{db_suffix}=provider"
+  end
+
+  new_resource.updated_by_last_action(true)
+end
+
+action :add_olcsyncrepl_to_all_dbs do
+  # TODO: Safely check for existing producer configuration, including possible restore from
+  # a producer backup which may not have been "promoted" to a master.  I.E. Check hostname
+  # or tags
+  #if is_producer
+  #  raise ""
+  #end
+
+  # TODO: Get this from tags or dns name
+  provider_hostname = "33.33.33.10"
+
+  hdb_filter = Net::LDAP::Filter.eq("objectclass", "olchdbconfig")
+  bdb_filter = Net::LDAP::Filter.eq("objectclass", "olcbdbconfig")
+  filter = hdb_filter | bdb_filter
+  dbs = nil
+  config_ldap{|ldap| dbs = ldap.search(:base => "cn=config", :filter => filter, :attributes => ["dn", "olcSuffix"]) }
+
+  dbs.each do |db|
+    db_suffix = db.olcSuffix.first.to_s
+
+    repl_user_cn = node["openldap"]["replication_user_cn"]
+    repl_user_dn = "cn=#{repl_user_cn},#{db_suffix}"
+    repl_user_pass = node["openldap"]["replication_user_password"]
+
+    config_ldap do |ldap|
+      olcSyncRepl = "rid=000 provider=ldap://#{provider_hostname} type=refreshAndPersist searchbase=#{db_suffix} bindmethod=simple binddn=#{repl_user_dn} credentials=#{repl_user_pass} attrs=\"*,+\""
+      ldap.modify(:dn => db.dn, :operations => [[:add, :olcSyncRepl, olcSyncRepl]])
     end
   end
 

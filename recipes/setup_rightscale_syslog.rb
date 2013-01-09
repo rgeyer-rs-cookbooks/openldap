@@ -18,6 +18,10 @@
 
 rightscale_marker :begin
 
+# TODO: This should go in /etc/rsyslog.d/openldap.conf
+#$SystemLogRateLimitInterval 0
+#local4.*   /var/log/openldap.log
+
 include_recipe "rightscale::setup_logging"
 
 ruby_block "Append OpenLDAP logging to RightScale syslog" do

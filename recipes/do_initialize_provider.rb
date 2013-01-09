@@ -32,6 +32,4 @@ end
 
 #include_recipe "sys_dns::do_set_private"
 
-right_link_tag "openldap:role=provider"
-
 rightscale_marker :end

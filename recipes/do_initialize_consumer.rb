@@ -18,4 +18,12 @@
 
 rightscale_marker :begin
 
+service "slapd" do
+  action :nothing
+end
+
+openldap_config "Add olcsyncrepl to all databases" do
+  action :add_olcsyncrepl_to_all_dbs
+end
+
 rightscale_marker :end

@@ -14,6 +14,7 @@
 
 actions :create
 actions :add_syncprov_to_all_dbs
+actions :add_olcsyncrepl_to_all_dbs
 actions :set_admin_creds
 
 default_action :create

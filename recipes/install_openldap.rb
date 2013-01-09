@@ -50,4 +50,6 @@ directory node["openldap"]["db_dir"] do
   action :create
 end
 
+right_link_tag "openldap:active=true"
+
 rightscale_marker :end
