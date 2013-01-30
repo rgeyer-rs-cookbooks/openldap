@@ -18,6 +18,9 @@
 
 rightscale_marker :begin
 
+node["db"]["version"] = "2.4"
+node["db"]["provider"] = "openldap"
+
 if ::File.directory? node["rightscale_sandbox"]["home"]
   load_ruby_gem_into_rightscale_sandbox("net-ldap", "0.2.2", nil, true)
 end

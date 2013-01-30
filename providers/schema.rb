@@ -21,6 +21,7 @@ action :enable do
 
   template slapd_conf do
     source "slapdSchemas.conf.erb"
+    cookbook "openldap"
     variables(:schemas => schema_ary)
   end
 

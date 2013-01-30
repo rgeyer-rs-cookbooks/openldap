@@ -19,8 +19,8 @@ actions :set_admin_creds
 
 default_action :create
 
-attribute :config_admin_dn, :kind_of => [ String ], :default => "cn=#{node["openldap"]["config_admin_cn"]},cn=config"
-attribute :config_admin_password, :kind_of => [ String ], :default => node["openldap"]["config_admin_password"]
+attribute :config_admin_dn, :kind_of => [ String ], :default => "cn=#{node["db"]["admin"]["user"]},cn=config"
+attribute :config_admin_password, :kind_of => [ String ], :default => node["db"]["admin"]["password"]
 
 # Required for :add_syncprov_to_all_dbs
 attribute :provider_checkpoint_updates, :kind_of => [ Integer ], :default => 100

@@ -1,4 +1,4 @@
-# Copyright 2011-2012, Ryan J. Geyer
+# Copyright 2011-2013, Ryan J. Geyer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ action :create do
     create_db_attrs = {
       :objectclass => ["olcDatabaseConfig","olc#{db_type}Config"],
       :olcDatabase => "{1}#{db_type}",
-      :olcDbDirectory => node["openldap"]["db_dir"],
+      :olcDbDirectory => node["openldap"]["os_db_dir"],
       :olcSuffix => base_dn,
       :olcDbConfig => ["{0}set_cachesize #{cache_size}",
                        "{1}set_lk_max_objects #{max_objects}",

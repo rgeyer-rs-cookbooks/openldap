@@ -5,20 +5,18 @@ description      "Installs/Configures openldap"
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 version          "0.0.1"
 
-%w{rightscale rightscale_sandbox sys_dns block_device}.each do |d|
+%w{rightscale rightscale_sandbox sys_dns block_device db}.each do |d|
   depends d
 end
 
 supports "ubuntu"
 supports "centos"
 
-recipe "openldap::install_openldap", "Installs a basic, working OpenLDAP server daemon"
-recipe "openldap::setup_rightscale_syslog", "Appends configuration for OpenLDAP to the RightScale syslog configuration."
-recipe "openldap::setup_config_admin_creds", "Sets the CN (Common Name) and password for the configuration admin"
+recipe "openldap::default", "It's the default"
 recipe "openldap::do_create_database", "Creates a new database to contain records for the specified base_dn"
 recipe "openldap::do_enable_schemas", "Enables the OpenLDAP schemas listed"
-recipe "openldap::do_initialize_provider", "Configures this node to be the LDAP replication provider."
-recipe "openldap::do_initialize_consumer", "Configures this node to be an LDAP replication consumer."
+recipe "openldap::install_openldap", "Installs a basic, working OpenLDAP server daemon"
+recipe "openldap::setup_rightscale_syslog", "Appends configuration for OpenLDAP to the RightScale syslog configuration."
 
 attribute "openldap/allow_remote",
   :display_name => "OpenLDAP Allow Remote?",
@@ -26,41 +24,14 @@ attribute "openldap/allow_remote",
   :choice => ["true", "false"],
   :required => "required",
   :category => "OpenLDAP Daemon",
-  :recipes => ["openldap::install_openldap"]
+  :recipes => ["openldap::install_openldap", "openldap::default"]
 
 attribute "openldap/listen_port",
   :display_name => "OpenLDAP listen port",
   :description => "The TCP/IP port the OpenLDAP server should listen on",
   :default => "389",
   :category => "OpenLDAP Daemon",
-  :recipes => ["openldap::install_openldap"]
-
-attribute "openldap/config_admin_cn",
-  :display_name => "OpenLDAP Config Admin CN",
-  :description => "The desired \"Common Name\" for the slapd configuration (cn=config) administrator",
-  :category => "OpenLDAP olcConfig",
-  :required => "required"
-
-attribute "openldap/config_admin_password",
-  :display_name => "OpenLDAP Config Admin password",
-  :description => "The desired password for the slapd configuration (cn=config) administrator",
-  :category => "OpenLDAP olcConfig",
-  :required => "required"
-
-attribute "openldap/replication_user_cn",
-  :display_name => "OpenLDAP Replication User CN",
-  :description => "A CN given to the replication user which will be automatically created in each database to be replicated.  For a single producer with a single database with a root dn of dc=foo,dc=bar the created replication user will be cn=<replication_user_cn>,dc=foo,dc=bar",
-  :required => "optional",
-  :default => "dbrepl",
-  :category => "OpenLDAP Replication",
-  :recipes => ["openldap::do_initialize_provider","openldap::do_initialize_consumer"]
-
-attribute "openldap/replication_user_password",
-  :display_name => "OpenLDAP Replication Password",
-  :description => "The password used for the replication user which will be automatically created in each database to be replicated.",
-  :required => "required",
-  :category => "OpenLDAP Replication",
-  :recipes => ["openldap::do_initialize_provider","openldap::do_initialize_consumer"]
+  :recipes => ["openldap::install_openldap", "openldap::default"]
 
 attribute "openldap/schemas",
   :display_name => "OpenLDAP Schemas",
@@ -68,7 +39,7 @@ attribute "openldap/schemas",
   :type => "array",
   :default => ["core","cosine","inetorgperson"],
   :category => "OpenLDAP olcConfig",
-  :recipes => ["openldap::install_openldap", "openldap::do_enable_schemas"]
+  :recipes => ["openldap::install_openldap", "openldap::do_enable_schemas", "openldap::default"]
 
 attribute "openldap/database_admin_cn",
   :display_name => "OpenLDAP Database Admin CN",

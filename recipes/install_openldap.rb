@@ -43,13 +43,6 @@ openldap_schema "Enable schema list" do
   action :enable
 end
 
-directory node["openldap"]["db_dir"] do
-  recursive true
-  owner node["openldap"]["username"]
-  group node["openldap"]["group"]
-  action :create
-end
-
 right_link_tag "openldap:active=true"
 
 rightscale_marker :end

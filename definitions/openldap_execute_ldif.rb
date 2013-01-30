@@ -25,11 +25,13 @@ define :openldap_execute_ldif, :source => nil, :source_type => nil, :executable 
       template dest_file do
         backup false
         source params[:source]
+        cookbook "openldap"
         variables params
       end
     when :cookbook_file
       cookbook_file dest_file do
         source params[:source]
+        cookbook "openldap"
         backup false
       end
     when :file

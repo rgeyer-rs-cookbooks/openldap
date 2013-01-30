@@ -22,13 +22,29 @@ action :create do
 
   sys_firewall node["openldap"]["listen_port"]
 
-  unless ::File.directory?(node["openldap"]["config_dir"]) && ::Dir.entries(node["openldap"]["config_dir"]).size > 0
-    ::Chef::Log.debug("Clobbering the openldap slapd.d configuration at #{node["openldap"]["config_dir"]}")
+  slapd_dir = ::File.join(node["openldap"]["os_config_dir"], "slapd.d")
+  bootstrap_file = ::File.join(slapd_dir, "bootstrapped")
+
+  unless ::File.exist?(bootstrap_file)
+    ::Chef::Log.info("Clobbering the openldap slapd.d configuration at #{node["openldap"]["os_config_dir"]}")
     slapd_conf = ::File.join(Chef::Config[:file_cache_path], "slapd.conf")
-    os_slapd_dir = ::File.join(node["openldap"]["os_config_dir"], "slapd.d")
+
+    ruby_block "Clobber #{node["openldap"]["os_config_dir"]}" do
+      block do
+        FileUtils.rm_rf(slapd_dir)
+      end
+    end
+
+    directory slapd_dir do
+      recursive true
+      owner node["openldap"]["username"]
+      group node["openldap"]["group"]
+      action :create
+    end
 
     template slapd_conf do
       source "slapd.conf.erb"
+      cookbook "openldap"
       variables(
         :rootdn => new_resource.config_admin_dn,
         :rootpw => slappasswd_encode(new_resource.config_admin_password),
@@ -36,30 +52,19 @@ action :create do
                 )
     end
 
-    directory node["openldap"]["config_dir"] do
-      recursive true
-      owner node["openldap"]["username"]
-      group node["openldap"]["group"]
-      mode 0700
-      action :create
-    end
-
     execute "Convert slapd.conf to cn=config" do
-      command "slaptest -f #{slapd_conf} -F #{node["openldap"]["config_dir"]}"
+      command "slaptest -f #{slapd_conf} -F #{slapd_dir}"
       notifies :delete, "template[#{slapd_conf}]"
     end
 
     execute "Set permissions for slapd.d directory" do
-      command "chown -R #{node["openldap"]["username"]}:#{node["openldap"]["group"]} #{node["openldap"]["config_dir"]}"
+      command "chown -R #{node["openldap"]["username"]}:#{node["openldap"]["group"]} #{slapd_dir}"
     end
 
-    directory os_slapd_dir do
-      recursive true
-      action :delete
-    end
-
-    link os_slapd_dir do
-      to node["openldap"]["config_dir"]
+    file bootstrap_file do
+      owner "root"
+      group "root"
+      action :create
     end
   end
 
@@ -68,6 +73,7 @@ action :create do
   # port and LDAPI, disabling for now
   template node["openldap"]["slapd_options_file"] do
     source "slapd.options.erb"
+    cookbook "openldap"
     variables(:listen_host => listen_host, :listen_port => listen_port)
     backup false
     action :nothing
@@ -126,9 +132,9 @@ action :add_syncprov_to_all_dbs do
     end
 
     db_suffix = db.olcSuffix.first.to_s
-    repl_user_cn = node["openldap"]["replication_user_cn"]
+    repl_user_cn = node["db"]["replication"]["user"]
     repl_user_dn = "cn=#{repl_user_cn},#{db_suffix}"
-    repl_user_pass = slappasswd_encode(node["openldap"]["replication_user_password"])
+    repl_user_pass = slappasswd_encode(node["db"]["replication"]["password"])
     # Create a replication user
     db_ldap(db_suffix) do |ldap|
       repl_user = ldap.search(:base => repl_user_dn)
@@ -172,15 +178,8 @@ action :add_syncprov_to_all_dbs do
 end
 
 action :add_olcsyncrepl_to_all_dbs do
-  # TODO: Safely check for existing producer configuration, including possible restore from
-  # a producer backup which may not have been "promoted" to a master.  I.E. Check hostname
-  # or tags
-  #if is_producer
-  #  raise ""
-  #end
-
   # TODO: Get this from tags or dns name
-  provider_hostname = "33.33.33.10"
+  provider_hostname = node[:db][:current_master_ip]
 
   hdb_filter = Net::LDAP::Filter.eq("objectclass", "olchdbconfig")
   bdb_filter = Net::LDAP::Filter.eq("objectclass", "olcbdbconfig")
@@ -191,9 +190,9 @@ action :add_olcsyncrepl_to_all_dbs do
   dbs.each do |db|
     db_suffix = db.olcSuffix.first.to_s
 
-    repl_user_cn = node["openldap"]["replication_user_cn"]
+    repl_user_cn = node["db"]["replication"]["user"]
     repl_user_dn = "cn=#{repl_user_cn},#{db_suffix}"
-    repl_user_pass = node["openldap"]["replication_user_password"]
+    repl_user_pass = node["db"]["replication"]["password"]
 
     config_ldap do |ldap|
       olcSyncRepl = "rid=000 provider=ldap://#{provider_hostname} type=refreshAndPersist searchbase=#{db_suffix} bindmethod=simple binddn=#{repl_user_dn} credentials=#{repl_user_pass} attrs=\"*,+\""

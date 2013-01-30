@@ -17,7 +17,7 @@ actions :enable
 
 default_action :enable
 
-attribute :config_admin_dn, :kind_of => [ String ], :default => "cn=#{node["openldap"]["config_admin_cn"]},cn=config"
-attribute :config_admin_password, :kind_of => [ String ], :default => node["openldap"]["config_admin_password"]
+attribute :config_admin_dn, :kind_of => [ String ], :default => "cn=#{node["db"]["admin"]["user"]},cn=config"
+attribute :config_admin_password, :kind_of => [ String ], :default => node["db"]["admin"]["password"]
 
 attribute :name, :kind_of => [ String ], :name_attribute => true, :required => true

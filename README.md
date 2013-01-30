@@ -31,4 +31,7 @@ Enable LDAP over SSH encryption
 
 CRAZY MAD UZEFULZ -- http://blogs.mindspew-age.com/tag/memory-mapped-database/
 
-Backup infoz -- http://www.openldap.org/faq/data/cache/287.html
+Backup infoz
+  * http://www.openldap.org/faq/data/cache/287.html
+  * http://www.openldap.org/lists/openldap-technical/201202/msg00121.html
+  * http://www.openldap.org/lists/openldap-software/200608/msg00152.html

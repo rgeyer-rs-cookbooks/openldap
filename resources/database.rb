@@ -26,5 +26,5 @@ attribute :max_locks, :kind_of => [ String ]
 attribute :max_lockers, :kind_of => [ String ]
 attribute :checkpoint, :kind_of => [ String ]
 
-attribute :config_admin_dn, :kind_of => [ String ], :default => "cn=#{node["openldap"]["config_admin_cn"]},cn=config"
-attribute :config_admin_password, :kind_of => [ String ], :default => node["openldap"]["config_admin_password"]
+attribute :config_admin_dn, :kind_of => [ String ], :default => "cn=#{node["db"]["admin"]["user"]},cn=config"
+attribute :config_admin_password, :kind_of => [ String ], :default => node["db"]["admin"]["password"]

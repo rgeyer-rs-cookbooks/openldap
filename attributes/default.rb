@@ -20,6 +20,7 @@ case node["platform_family"]
       "openldap-servers","openldap-clients","db4-utils"
     ]
     default["openldap"]["os_config_dir"]      = "/etc/openldap"
+    default["openldap"]["os_db_dir"]          = "/var/lib/ldap" #?
     default["openldap"]["username"]           = "ldap"
     default["openldap"]["group"]              = "ldap"
     default["openldap"]["module_dir"]         = "/usr/lib64/openldap"
@@ -35,6 +36,7 @@ case node["platform_family"]
 
     default["openldap"]["packages"]           = packages
     default["openldap"]["os_config_dir"]      = "/etc/ldap"
+    default["openldap"]["os_db_dir"]          = "/var/lib/ldap" # TODO: Test this
     default["openldap"]["username"]           = "openldap"
     default["openldap"]["group"]              = "openldap"
     default["openldap"]["module_dir"]         = "/usr/lib/ldap" # TODO: Test this, could be lib64 instead?
